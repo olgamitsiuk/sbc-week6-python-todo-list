@@ -112,7 +112,9 @@ def view():
         return
     # Print tasks 
     else:
-        print("\nYour TO-DO list: ")
+        print("\n=================")
+        print("Your TO-DO list: ")
+        print("=================")      
         for task in tasks:
             print(f"{task['id']}. {task['description']} \n   Status: {task['status']}") 
 
