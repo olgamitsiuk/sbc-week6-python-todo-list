@@ -1,10 +1,11 @@
 import json
 from prompt_toolkit import prompt
 
+# Load tasks from JSON file
 with open('tasks.json', 'r') as file:
     tasks = json.load(file)
-   # print("Data Read from JSON File:", file_data)
 
+# Define menu options for the application
 options = [
     "1. Add a task",
     "2. View tasks",
@@ -13,13 +14,15 @@ options = [
     "5. Exit"
 ]
 
+# Define possible statuses for tasks
 statuses = ["Pending", "Completed"]
 
+# Welcome message
 print("\n==============================")
 print("Welcome to the TO-DO list app!")
 print("==============================")
 
-# main loop for app
+# Main loop for app
 def main():
 
     while True:
@@ -43,17 +46,35 @@ def main():
         else:
             print("\nInvalid choice. Please choose again.")
 
-# adding new task
+def get_task_status():
+    # Get task status from user with validation
+    while True:
+        print("Choose a status")
+
+        for i, status in enumerate(statuses, 1):
+            print(f"{i}. {status}")
+
+        task_status = input("> ")
+        if task_status == "0":
+            return None
+        elif task_status == "1":
+            return "Pending"
+        elif task_status == "2":
+            return "Completed"
+        else:
+            print("\nInvalid choice. Please choose 1 or 2.")
+
+# Add new task
 def add():
-    # create new task
+    # Create new task
     new_task = {}
     new_task["id"] = len(tasks) + 1 
 
-    # get description 
+    # Get task description from user with validation
     while True:
         print("\nAdd new task or type 0 to return to previous menu:")
         task_description = input("> ")
-        # return to main menu
+        # Return to main menu
         if task_description == "0":
             return 
         if len(task_description) > 0:
@@ -62,25 +83,14 @@ def add():
         else:
             print("\nTask description cannot be empty! Please try again.")
 
-    # get status
-    while True:
-        print("Choose a status")
-
-        for i, status in enumerate(statuses, 1):
-            print(f"{i}. {status}")
-
-        task_status = input("> ")
+    # Get task status from user
+    task_status = get_task_status()
+    if task_status is None:
+        print("\nTask was not added due to incomplete information.")
+        return
+    new_task["status"] = task_status
         
-        if task_status == "1":
-            new_task["status"] = "Pending"
-            break
-        elif task_status == "2":
-            new_task["status"] = "Completed"
-            break
-        else:
-            print("\nInvalid choice. Please choose 1 or 2.")
-
-    # save task
+    # Save task to json file if all required fields are completed
     if "description" in new_task and "status" in new_task:
         tasks.append(new_task)
         try:
@@ -90,35 +100,33 @@ def add():
 
         except Exception as e:
             print(f"\nError saving task: {e}")
-            tasks.remove(new_task)
+            tasks.remove(new_task) # Remove task if saving failed
     else:
         print("\nTask was not added due to incomplete information.")        
 
-# view all tasks
+# View all tasks
 def view():
-    # check if tasks exist
+    # Check if tasks exist
     if not tasks:
         print("\nYou don't have tasks")
         return
-     
+    # Print tasks 
     else:
         print("\nYour TO-DO list: ")
         for task in tasks:
             print(f"{task['id']}. {task['description']} \n   Status: {task['status']}") 
 
-# updating task
+# Update an existing task
 def update():
     global tasks
-    # check if tasks exist
+    # Check if tasks exist
     if not tasks:
         print("\nNo tasks to update!")
         return
-    
+    # Get task number to update
     print("\nChoose a task number for updating or type 0 to return to previous menu:")
 
-    # for task in tasks:
-    #     print(f"{task['id']}. {task['description']} \n   Status: {task['status']}")
-
+    # Validate task ID input
     while True:
         task_id = input("> ")
         if task_id == "0":
@@ -130,40 +138,36 @@ def update():
             print("Please enter a valid number!")
             continue
 
+        # Check if task exists
         if not any(task['id'] == task_id for task in tasks):
             print(f"Task number {task_id} not found! Please try again.")
             continue
 
+        # Get task to update from user
         updating_task = next((task for task in tasks if task['id'] == task_id))
+        temp_task = updating_task.copy()  # Create a copy to store temporary changes
 
+        # Update task description using prompt_toolkit
         while True:
-            # prompt_toolkit for updating
             new_description = prompt("Edit description: ", default=updating_task["description"])
             if len(new_description) > 0:
-                updating_task["description"] = new_description
+                temp_task["description"] = new_description
                 break
             else:
                 print("\nTask description cannot be empty! Please try again.")
 
-        while True:
-            print("Choose a status")
-
-            for i, status in enumerate(statuses, 1):
-                print(f"{i}. {status}")
-
-            task_status = input("> ")
+        # Update task status
+        task_status = get_task_status()
+        if task_status is None:
+            print("\nTask was not updated due to incomplete information.")
+            return
             
-            if task_status == "1":
-                updating_task["status"] = "Pending"
-                break
-            elif task_status == "2":
-                updating_task["status"] = "Completed"
-                break
-            else:
-                print("\nInvalid choice. Please choose 1 or 2.")
+        temp_task["status"] = task_status
 
+        # Save updated task to json file
         if "description" in updating_task and "status" in updating_task:
             try:
+                updating_task.update(temp_task)
                 with open('tasks.json', 'w') as file:
                     json.dump(tasks, file, indent=4)
                     print("\nTask successfully adupdated!")
@@ -176,20 +180,20 @@ def update():
         break
         
         
-
+# Delete a task and reorder tasks id's
 def delete():
     global tasks
 
+    # Check if tasks exist
     if not tasks:
         print("\nNo tasks to delete!")
         return
     
+    # Get task number to delete from user
     print("\nChoose a task number for deleting or type 0 to return to previous menu:")
-    # for task in tasks:
-    #     print(f"{task['id']}. {task['description']} \n   Status: {task['status']}")
-    
-    while True:
 
+    # Validate task ID input
+    while True:
         task_id = input("> ")
         if task_id == "0":
             return
@@ -199,25 +203,23 @@ def delete():
         except ValueError:
             print("Please enter a valid number!")
             continue
-
-        # if task_id > len(tasks):
-        #     print("Task with this number doesn't exist. Please try again.")
-        #     continue
-
+        # Check if task exists
         if not any(task['id'] == task_id for task in tasks):
             print(f"Task number {task_id} not found! Please try again.")
             continue
 
+        # Delete task and check if deletion was successful
         original_length = len(tasks)
         tasks = list(filter(lambda task: task['id'] != task_id, tasks))
 
         if len(tasks) == original_length:
                     print("Failed to delete task!")
                     continue
-
+        # Reorder task id's            
         for index, task in enumerate(tasks, 1):
                 task['id'] = index
 
+        # Save updated task list to json file
         try:
             with open('tasks.json', 'w') as file:
                 json.dump(tasks, file, indent=4)
@@ -226,4 +228,5 @@ def delete():
             print(f"Error saving to file: {e}")
         break
 
+# Start the application
 main()                
