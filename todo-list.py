@@ -215,11 +215,11 @@ def delete():
         tasks = list(filter(lambda task: task['id'] != task_id, tasks))
 
         if len(tasks) == original_length:
-                    print("Failed to delete task!")
-                    continue
+            print("Failed to delete task!")
+            continue
         # Reorder task id's            
         for index, task in enumerate(tasks, 1):
-                task['id'] = index
+            task['id'] = index
 
         # Save updated task list to json file
         try:
